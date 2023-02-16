@@ -30,6 +30,7 @@ router.post("/registration", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
+    console.log('! Req body: ', req.body);
     try {
         const user = await findUserByEmail(req);
         comparePassword(req, user);
