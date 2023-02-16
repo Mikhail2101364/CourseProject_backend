@@ -22,7 +22,7 @@ router.post("/registration", async (req, res) => {
         await checkUserByName(req);
         const newUser = await createUser(req);
         const token = createJWT(newUser);
-        res.send({ token });
+        res.json({ token });
         console.log('User '+newUser.username+' has registrated')
     } catch (error) {
         handleError(error, res);
@@ -34,7 +34,7 @@ router.post("/login", async (req, res) => {
         const user = await findUserByEmail(req);
         comparePassword(req, user);
         const token = createJWT(user);
-        res.send({ token });
+        res.json({ token });
         console.log('User '+user.username+' has authorized')
     } catch (error) {
         handleError(error, res);
@@ -46,7 +46,7 @@ router.get("/user", async (req, res) => {
         let userData = verifyJWT(req);
         const user = await findUserById(userData);
         console.log(user)
-        res.send(user);
+        res.json(user);
         console.log('User '+user.username+' data were send to client')
     } catch (error) {
         handleError(error, res);
