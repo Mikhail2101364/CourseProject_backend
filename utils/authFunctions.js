@@ -35,7 +35,7 @@ async function createUser(req) {
 
 function createJWT(user) {
     const {_id} = user;
-    return jwt.sign({ userID: _id }, process.env.JWT_Secret, { expiresIn: "15m" });
+    return jwt.sign({ userID: _id }, process.env.JWT_Secret, );
 }
 
 async function findUserByEmail(req) {

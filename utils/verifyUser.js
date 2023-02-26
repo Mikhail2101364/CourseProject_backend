@@ -6,7 +6,7 @@ const { generateError } = require("./errors")
 function verifyJWT (req) {
     const tokenHeader = req.headers.authorization;
     const token = tokenHeader.split(' ')[1];
-    console.log('Token: '+token)
+    // console.log('Token: '+token)
     try {
         const decoded = jwt.verify(token, process.env.JWT_Secret);
         return decoded;

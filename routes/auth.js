@@ -12,7 +12,6 @@ const {
     verifyJWT,
     findUserById
 } = require("../utils/verifyUser.js");
-const User = require("../models/User.js");
 
 const router = express.Router();
 
