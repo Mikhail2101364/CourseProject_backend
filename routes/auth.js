@@ -44,9 +44,7 @@ router.get("/user", async (req, res) => {
     try {
         let userData = verifyJWT(req);
         const user = await findUserById(userData);
-        console.log(user)
         res.json(user);
-        console.log('User '+user.username+' data were send to client')
     } catch (error) {
         handleError(error, res);
     }

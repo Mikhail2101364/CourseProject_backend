@@ -11,6 +11,10 @@ const collectionSchema = new Schema({
         ref: 'User',
         required: true,
     },
+    authorName: {
+        type: String,
+        required: true,
+    },
     description: {
         type: String,
         required: true

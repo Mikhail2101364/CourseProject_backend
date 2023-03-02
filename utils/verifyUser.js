@@ -21,7 +21,7 @@ async function findUserById(tokenDecoded) {
     if (!userData) {
         generateError(400, "User not found in BD" );
     }
-    return { username: userData.username, role: userData.role };
+    return { id: userData._id, username: userData.username, role: userData.role };
 }
 
 module.exports = {
