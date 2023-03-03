@@ -5,14 +5,15 @@ const {
 } = require("../utils/verifyUser.js");
 const { 
     createNewItem,
-    updateCollection,
     deleteItemById,
     findLastItem,
+    modifyItem,
+    findItemById,
 } = require("../utils/itemsFunctions.js");
 const { 
     findCollectionById,
-    findItemById,
     filterCustomFields,
+    updateCollection,
 } = require("../utils/collectionsFunctions.js");
 
 const router = express.Router();
@@ -26,6 +27,22 @@ router.post("/create", async (req, res) => {
         await updateCollection(collectionData._id, itemData._id, '$push')
         res.json({ 
             message: 'Item was created', 
+            itemData: itemData,
+        });
+    } catch (error) {
+        handleError(error, res);
+    }
+});
+
+router.post("/:id/modify", async (req, res) => {
+    try {
+        await  verifyJWT(req);
+        const itemID = req.params.id;
+        const { itemFields } = req.body;
+        await modifyItem(itemFields, itemID)
+        const itemData = await findItemById(itemID);
+        res.json({ 
+            message: 'Item was modified', 
             itemData: itemData,
         });
     } catch (error) {
@@ -65,9 +82,6 @@ router.post("/delete", async (req, res) => {
 router.get("/last", async (req, res) => {
     try {
         const data = await findLastItem();
-        // const itemsCollections = await findLastItemsCollections(lastItems);
-        // const data = setLastItemsFields(lastItems, await itemsCollections);
-        console.log('Last 3 items fields: ',data)
         res.json(data);
     } catch (error) {
         handleError(error, res);

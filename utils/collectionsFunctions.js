@@ -1,8 +1,5 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-const User = require("../models/User.js");
+
 const Collection = require("../models/Collection");
-const { Item } = require("../models/Item");
 const { generateError } = require("./errors")
 
 const setInputType = (type) => {
@@ -27,8 +24,6 @@ function createCustomFieldsSchema(customFields) {
             }
         }
     ));
-    // const customFieldsSchema = new Schema(schemaObj);
-    // return customFieldsSchema;
     return schemaObj;
 }
 
@@ -43,20 +38,20 @@ async function checkCollectionName(req, userID) {
     }
 }
 
-async function findUserById(userID) {
-    try {
-        const userData = await User.findById(userID);
-        return userData;
-    } catch (error) {
-        generateError(400, "User not found");
-    }
-};
+// async function findUserById(userID) {
+//     try {
+//         const userData = await User.findById(userID);
+//         return userData;
+//     } catch (error) {
+//         generateError(400, "User not found");
+//     }
+// };
 
-async function createCollection(req, userID) {
+async function createCollection(req, userData) {
     try {
         const { title, description, theme, customFields } = req.body;
         const itemSchema = createCustomFieldsSchema(customFields);
-        const userData = await findUserById(userID);
+        // const userData = await findUserById(userID);
         const newCollection = new Collection({ title, author: userData._id, authorName: userData.username, description, theme, itemSchema: itemSchema });
         return newCollection.save();
     } catch (error) {
@@ -89,33 +84,6 @@ async function findCollectionById(collectionID) {
     }
 };
 
-async function findItemById(itemID) {
-    try {
-        const itemData = await Item.findById(itemID);
-        return await itemData;
-    } catch (error) {
-        generateError(400, "Item not found");
-    }
-};
-
-async function setItems(itemsID) {
-    try {
-        if (itemsID.length > 0) {
-            const items = await Item.find({ _id: itemsID });
-            return await items;
-        } else {
-            const items = [];
-            items.push({ 
-                _id: null,
-                customFields: null,
-            });
-            return items;
-        }
-    } catch (error) {
-        generateError(400, "Items found error");
-    }
-}
-
 function filterCustomFields(fieldsObj) {
     const itemFields = [];
     Object.keys(fieldsObj).forEach((key) => {
@@ -142,20 +110,20 @@ function filterCollection(collectionData, userData) {
     return collection;
 }
 
-async function showCollection(collectionID) {
-    try {
-        const collectionData = await findCollectionById(collectionID);
-        const userData = await findUserById(collectionData.author);
-        const items = await setItems(collectionData.items);
-        const collection = filterCollection(collectionData, userData)
-        return {
-            collection,
-            items
-        };
-    } catch (error) {
-        throw error;
-    }
-};
+// async function showCollection(collectionID) {
+//     try {
+//         const collectionData = await findCollectionById(collectionID);
+//         const userData = await findUserById(collectionData.author);
+//         const items = await setItems(collectionData.items);
+//         const collection = filterCollection(collectionData, userData)
+//         return {
+//             collection,
+//             items
+//         };
+//     } catch (error) {
+//         throw error;
+//     }
+// };
 
 async function findCollectionsByUserId(userID) {
     try {
@@ -178,14 +146,6 @@ async function findLastCollections() {
     }
 };
 
-async function deleteManyItemsById(itemsID_array) {
-    try {
-        await Item.deleteMany({ _id: { $in: itemsID_array } });
-    } catch (error) {
-        generateError(400, "Items was not deleted");
-    }
-};
-
 async function deleteCollectionById(collectionID) {
     try {
         await Collection.deleteOne({ _id: collectionID });
@@ -194,46 +154,24 @@ async function deleteCollectionById(collectionID) {
     }
 };
 
-function getObjectDiff(obj1, obj2) {
-    const diff = {};
-    for (const key in obj1) {
-        if (!(key in obj2)) {
-            diff['customFields.'+key] = "";
-        }
-    }
-    return diff;
-}
-
-async function updateItemFields(oldCollection, newCollection) {
+async function updateCollection(collectionID, itemID, action) {
     try {
-        const addFields = getObjectDiff(newCollection.itemSchema, oldCollection.itemSchema);
-        const deleteFields = getObjectDiff(oldCollection.itemSchema, newCollection.itemSchema);
-console.log('addFields',addFields)
-console.log('deleteFields',deleteFields)
-         //   const update = { $set: { field2: 'newvalue2', field3: 'newvalue3' }, $unset: { field4: '' } };
-        const updatedItems = await Item.updateMany({_id: { $in: newCollection.items }}, {
-            $set: addFields,
-            // "customFields": {$set: {"customFields": addFields}},
-            // $set: Object.keys(addFields).map(name => {customFields[name] = null}) ,
-            $unset: deleteFields 
-        });
-        return updatedItems;   
+        const updatedCollection = await Collection.updateOne({_id: collectionID}, {[action]: {items: itemID}});
+        return updatedCollection;   
     } catch (error) {
-        generateError(400, "Failed to update items");
+        generateError(400, "Failed to update collection");
     }
-}
+};
 
 module.exports = {
     checkCollectionName,
     createCollection,
-    showCollection,
     findCollectionsByUserId,
     findLastCollections,
     findCollectionById,
-    findItemById,
     filterCustomFields,
-    deleteManyItemsById,
     deleteCollectionById,
     modifyCollection,
-    updateItemFields,
+    filterCollection,
+    updateCollection,
 };

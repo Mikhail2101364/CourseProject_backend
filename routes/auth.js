@@ -22,7 +22,6 @@ router.post("/registration", async (req, res) => {
         const newUser = await createUser(req);
         const token = createJWT(newUser);
         res.json({ token });
-        console.log('User '+newUser.username+' has registrated')
     } catch (error) {
         handleError(error, res);
     }
@@ -34,7 +33,6 @@ router.post("/login", async (req, res) => {
         comparePassword(req, user);
         const token = createJWT(user);
         res.json({ token });
-        console.log('User '+user.username+' has authorized')
     } catch (error) {
         handleError(error, res);
     }

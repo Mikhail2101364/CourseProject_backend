@@ -1,9 +1,16 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-const User = require("../models/User.js");
+
 const Collection = require("../models/Collection");
-const {Item, itemSchema} = require("../models/Item");
+const Item = require("../models/Item");
 const { generateError } = require("./errors")
+
+async function findItemById(itemID) {
+    try {
+        const itemData = await Item.findById(itemID);
+        return await itemData;
+    } catch (error) {
+        generateError(400, "Item not found");
+    }
+};
 
 async function createNewItem(collectionData, itemFields) {
     try {
@@ -13,10 +20,21 @@ async function createNewItem(collectionData, itemFields) {
             collectionTitle: collectionData.title,
             theme: collectionData.theme,
             authorName: collectionData.authorName,
-            customFields: itemFieldsObj});
+            customFields: itemFieldsObj
+        });
         return await newItem.save();   
     } catch (error) {
         generateError(400, "Failed to create item");
+    }
+}
+
+async function modifyItem(itemFields, itemID) {
+    try {
+        const itemFieldsObj = setItemFieldsObj(itemFields);
+        const updatedItem = await Item.updateOne({_id: itemID}, {$set: {customFields: itemFieldsObj}});
+        return await updatedItem;   
+    } catch (error) {
+        generateError(400, "Failed to modify item");
     }
 }
 
@@ -31,15 +49,7 @@ function setItemFieldsObj(itemFields) {
     return itemFieldsObj;
 }
 
-async function updateCollection(collectionID, itemID, action) {
-    try {
-        const updatedCollection = await Collection.updateOne({_id: collectionID}, {[action]: {items: itemID}});
-        console.log('updatedCollection: ', updatedCollection)
-        return updatedCollection;   
-    } catch (error) {
-        generateError(400, "Failed to update collection");
-    }
-}
+
 
 async function deleteItemById(itemID) {
     try {
@@ -60,45 +70,63 @@ async function findLastItem() {
     }
 };
 
-// async function findLastItemsCollections(lastItems) {
-//     try {
-//         // const collectionID = [];
-//         let itemsCollections = [];
-//         lastItems.map(async (i)=>{
-//             let collectionID = i.collectionId
-//             const collectionData = await Collection.findById(collectionID);
-//             itemsCollections.push(collectionData);
-//         });
-//         console.log('collectionID array: ',collectionID)
-//         //const itemsCollections = await Collection.find({ _id: collectionID });
-        
-//         return itemsCollections;
-//     } catch (error) {
-//         generateError(400, "Failed to find last items collections");
-//     }
-// };
+async function setItems(itemsID) {
+    try {
+        if (itemsID.length > 0) {
+            const items = await Item.find({ _id: itemsID });
+            return await items;
+        } else {
+            const items = [];
+            items.push({ 
+                _id: null,
+                customFields: null,
+            });
+            return items;
+        }
+    } catch (error) {
+        generateError(400, "Items found error");
+    }
+};
 
-// function setLastItemsFields(lastItems, itemsCollections) {
-//     console.log('Last 3 items: ',lastItems)
-//     console.log('Last 3 items coll: ',itemsCollections)
-//     let itemsFieldsArray = [];
-//     lastItems.map((item,index)=>{
-//         itemsFieldsArray.push({
-//             itemID: item._id,
-//             itemName: item.customFields.String_Title,
-//             collectionName: itemsCollections[index].title,
-//             author: itemsCollections[index].authorName,
-//             theme: itemsCollections[index].theme,
-//         })
-//     })
-//     return itemsFieldsArray;
-// }
+function getObjectDiff(obj1, obj2) {
+    const diff = {};
+    for (const key in obj1) {
+        if (!(key in obj2)) {
+            diff['customFields.'+key] = "";
+        }
+    }
+    return diff;
+}
+
+async function updateItemFields(oldCollection, newCollection) {
+    try {
+        const addFields = getObjectDiff(newCollection.itemSchema, oldCollection.itemSchema);
+        const deleteFields = getObjectDiff(oldCollection.itemSchema, newCollection.itemSchema);
+        const updatedItems = await Item.updateMany({_id: { $in: newCollection.items }}, {
+            $set: addFields,
+            $unset: deleteFields 
+        });
+        return updatedItems;   
+    } catch (error) {
+        generateError(400, "Failed to update items");
+    }
+};
+
+async function deleteManyItemsById(itemsID_array) {
+    try {
+        await Item.deleteMany({ _id: { $in: itemsID_array } });
+    } catch (error) {
+        generateError(400, "Items was not deleted");
+    }
+};
 
 module.exports = {
     createNewItem,
-    updateCollection,
     deleteItemById,
     findLastItem,
-    // findLastItemsCollections,
-    // setLastItemsFields,
+    modifyItem,
+    findItemById,
+    setItems,
+    updateItemFields,
+    deleteManyItemsById,
 };

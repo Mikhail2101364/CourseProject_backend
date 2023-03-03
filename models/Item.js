@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// const customFieldsSchema = new Schema()
-
 const itemSchema = new Schema({
     collectionId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -21,7 +19,6 @@ const itemSchema = new Schema({
         type: String,
         required: true,
     },
-    // customFields: customFieldsSchema,
     customFields: {
         type: Object,
         required: true,
@@ -33,4 +30,4 @@ const itemSchema = new Schema({
 
 const Item = mongoose.model('Item', itemSchema, 'Items_db');
 
-module.exports = {Item, itemSchema};
+module.exports = Item;

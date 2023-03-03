@@ -3,17 +3,23 @@ const {handleError} = require("../utils/errors.js");
 const { 
     verifyJWT
 } = require("../utils/verifyUser.js");
+const {
+    findUserById,
+} = require("../utils/authFunctions.js");
+const { 
+    setItems,
+    updateItemFields,
+    deleteManyItemsById,
+} = require("../utils/itemsFunctions.js");
 const { 
     checkCollectionName,
     createCollection,
-    showCollection,
     findCollectionsByUserId,
     findLastCollections,
-    deleteManyItemsById,
     deleteCollectionById,
     findCollectionById,
     modifyCollection,
-    updateItemFields,
+    filterCollection,
 } = require("../utils/collectionsFunctions.js");
 
 const router = express.Router();
@@ -22,7 +28,8 @@ router.post("/create", async (req, res) => {
     try {
         let { userID } = verifyJWT(req);
         await checkCollectionName(req, userID);
-        const newCollection = await createCollection(req, userID)
+        const userData = await findUserById(userID);
+        const newCollection = await createCollection(req, userData)
         res.json({ 
             message: 'Collection was created', 
             collectionID: newCollection._id,
@@ -38,11 +45,7 @@ router.post("/modify/:id", async (req, res) => {
         verifyJWT(req);
         const collectionData = await findCollectionById(collectionID);
         const newCollection = await modifyCollection(req, collectionID);
-        const updatedItems = await updateItemFields(collectionData, newCollection);
-        // console.log('old: ',collectionData)
-        // console.log('updatedItems: ',updatedItems)
-        console.log('updatedItems: ',updatedItems)
-        
+        await updateItemFields(collectionData, newCollection);
         res.json({ 
             message: 'Collection was modified', 
             collectionID: collectionData._id,
@@ -55,8 +58,15 @@ router.post("/modify/:id", async (req, res) => {
 router.get("/show/:id", async (req, res) => {
     try {
         const collectionID = req.params.id;
-        const data = await showCollection(collectionID)
-        res.json(data);
+        // const data = await showCollection(collectionID)
+        const collectionData = await findCollectionById(collectionID);
+        const userData = await findUserById(collectionData.author);
+        const items = await setItems(collectionData.items);
+        const collection = filterCollection(collectionData, userData)
+        res.json({
+            collection,
+            items
+        });
     } catch (error) {
         handleError(error, res);
     }
@@ -85,9 +95,7 @@ router.post("/delete", async (req, res) => {
     try {
         await verifyJWT(req);
         const { collectionID } = req.body;
-        console.log('coll id: ', collectionID)
         const collectionData = await findCollectionById(collectionID);
-        console.log('coll data: ', collectionData)
         await deleteManyItemsById(collectionData.items);
         await deleteCollectionById(collectionData._id);
         res.json({
