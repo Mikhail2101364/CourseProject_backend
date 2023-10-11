@@ -21,13 +21,20 @@ const {
     modifyCollection,
     filterCollection,
 } = require("../utils/collectionsFunctions.js");
+const { 
+    uploadFile,
+} = require("../utils/cloudFunctions.js")
 
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 const router = express.Router();
 
-router.post("/create", async (req, res) => {
+router.post("/create", upload.single('avatarFile'), async (req, res) => {
     try {
         let { userID } = verifyJWT(req);
         await checkCollectionName(req, userID);
+        //uploadFile(req);
         const userData = await findUserById(userID);
         const newCollection = await createCollection(req, userData)
         res.json({ 

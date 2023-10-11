@@ -20,8 +20,8 @@ async function findUserById(tokenDecoded) {
     const userData = await User.findOne({ _id: userID });
     if (!userData) {
         generateError(400, "User not found in BD" );
-    }
-    return { id: userData._id, username: userData.username, role: userData.role };
+    };
+    return { id: userData._id, username: userData.username, role: userData.role, avatarUrl: userData.avatarUrl ? userData.avatarUrl : null };
 }
 
 module.exports = {
